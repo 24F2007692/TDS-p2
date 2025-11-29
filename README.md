@@ -31,6 +31,8 @@ An intelligent, autonomous agent built with **LangGraph** and **Google Gemini 2.
 - [Design Choices (Viva Prep)](#-design-choices-viva-prep)
 - [License](#-license)
 
+
+
 ## 🔍 Project Statement
 
 This project fulfills the requirements for the **Tools in Data Science (TDS)** course project. The objective is to build an application that can:
@@ -66,6 +68,45 @@ graph TD
     ToolsNode --> API["API Client"]
 ```
 
+### 🔄 Execution Flow (Sequence Diagram)
+
+The following sequence diagram illustrates the asynchronous nature of the request handling and the agent's interaction loop.
+
+```mermaid
+sequenceDiagram
+    participant User as Client/Grader
+    participant API as FastAPI Server
+    participant BG as Background Task
+    participant Agent as LangGraph Agent
+    participant Tools as Tool Set
+    participant Ext as External Quiz Server
+
+    User->>API: POST /solve {email, secret, url}
+    API->>API: Verify Secret
+    API->>BG: Spawn Agent Task
+    API-->>User: 200 OK {"status": "ok"}
+    
+    Note over User, API: Connection Closed (No Timeout)
+
+    BG->>Agent: Start(url)
+    
+    loop Until "END" or Timeout
+        Agent->>Tools: Call Tool (e.g., get_rendered_html)
+        Tools->>Ext: Fetch Page / Download File
+        Ext-->>Tools: Return Content
+        Tools-->>Agent: Return Tool Output
+        
+        Agent->>Agent: Analyze State & Plan Next Step
+        
+        opt Submit Answer
+            Agent->>Tools: post_request(answer)
+            Tools->>Ext: POST /submit
+            Ext-->>Tools: Response {correct, next_url}
+            Tools-->>Agent: Result
+        end
+    end
+```
+
 ### Key Components:
 
 1.  **FastAPI Server** (`main.py`): Entry point. Validates secrets and spawns the agent as a background task to prevent HTTP timeouts.
@@ -87,7 +128,7 @@ graph TD
 ## 📁 Project Structure
 
 ```
-LLM-Analysis-TDS-Project-2/
+TDS-p2/
 ├── agent.py                    # Core logic: LangGraph setup, System Prompt, State management
 ├── main.py                     # API Server: /solve endpoint, background task dispatch
 ├── tools/                      # Tool definitions
@@ -116,8 +157,8 @@ LLM-Analysis-TDS-Project-2/
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/saivijayragav/LLM-Analysis-TDS-Project-2.git
-cd LLM-Analysis-TDS-Project-2
+git clone https://github.com/24F2007692/TDS-p2.git
+cd TDS-p2
 ```
 
 ### 2. Install Dependencies
@@ -222,7 +263,18 @@ Returns server status and uptime.
 
 The agent is equipped with the following tools:
 
-1.  **`get_rendered_html`**: Fetches the DOM of a page *after* JavaScript execution. Essential for Single Page Applications (SPAs).
+| Tool Name | Function | Input | Output |
+| :--- | :--- | :--- | :--- |
+| **`get_rendered_html`** | Scrapes dynamic web pages | `url` (str) | `html_content` (str) |
+| **`run_code`** | Executes Python code | `code` (str) | `stdout`, `stderr` (str) |
+| **`download_file`** | Downloads files locally | `url` (str) | `filepath` (str) |
+| **`ocr_image_tool`** | Extracts text from images | `image_path` (str) | `text` (str) |
+| **`transcribe_audio`** | Converts audio to text | `audio_path` (str) | `transcription` (str) |
+| **`post_request`** | Submits answers | `url`, `data` (dict) | `response_json` (dict) |
+| **`add_dependencies`** | Installs Python packages | `packages` (str) | `status` (str) |
+| **`encode_image_to_base64`** | Encodes images for LLM | `image_path` (str) | `base64_string` (str) |
+
+### 1. **Web Scraper** (`get_rendered_html`)
 2.  **`run_code`**: Executes Python code. Used for math, dataframes (pandas), and string manipulation.
 3.  **`download_file`**: Downloads resources to a local `LLMFiles/` directory.
 4.  **`ocr_image_tool`**: Extracts text from images using Gemini Vision.
@@ -256,3 +308,11 @@ Our system prompt is designed to be **defensive** and **instruction-following**:
 ## 📄 License
 
 This project is licensed under the MIT License.
+
+---
+
+**Author**: KARTIK BAJAJ 
+**Course**: Tools in Data Science (TDS)
+**Institution**: IIT Madras
+
+For questions or issues, please open an issue on the [GitHub repository](https://github.com/24F2007692/TDS-p2).
