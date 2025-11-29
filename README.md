@@ -49,21 +49,21 @@ The project uses a **LangGraph state machine** architecture to orchestrate the a
 
 ```mermaid
 graph TD
-    Client[Client / Grader] -->|POST /solve| Server[FastAPI Server]
+    Client["Client / Grader"] -->|POST /solve| Server["FastAPI Server"]
     Server -->|200 OK| Client
-    Server -->|Spawns| Background[Background Task]
+    Server -->|Spawns| Background["Background Task"]
     
     subgraph "Autonomous Agent (LangGraph)"
-        Background --> AgentNode[Agent Node (LLM)]
-        AgentNode -->|Decides Tool| ToolsNode[Tools Node]
+        Background --> AgentNode["Agent Node (LLM)"]
+        AgentNode -->|Decides Tool| ToolsNode["Tools Node"]
         ToolsNode -->|Tool Output| AgentNode
-        AgentNode -->|"END"| Done[Completion]
+        AgentNode -->|"END"| Done["Completion"]
     end
     
-    ToolsNode --> Scraper[Web Scraper]
-    ToolsNode --> Downloader[File Downloader]
-    ToolsNode --> CodeExec[Python Code Executor]
-    ToolsNode --> API[API Client]
+    ToolsNode --> Scraper["Web Scraper"]
+    ToolsNode --> Downloader["File Downloader"]
+    ToolsNode --> CodeExec["Python Code Executor"]
+    ToolsNode --> API["API Client"]
 ```
 
 ### Key Components:
